@@ -6,11 +6,4 @@ import netlify from '@astrojs/netlify';
 export default defineConfig({
   integrations: [customElements()],
   adapter: netlify(),
-  vite: {
-    ssr: {
-      noExternal: [
-        "@generic-components/components"
-      ],
-    }
-  }
 });

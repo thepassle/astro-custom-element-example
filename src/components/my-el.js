@@ -14,5 +14,5 @@ import { GenericTabs } from '@generic-components/components/generic-tabs/Generic
 
 export const tagName = 'generic-tabs';
 console.log(1, 'before upgrade');
-debugger;
+// debugger;
 customElements.define(tagName, GenericTabs);

@@ -1,7 +1,8 @@
 import * as adapter from '@astrojs/netlify/netlify-functions.js';
+import _renderer0 from 'custom-elements-ssr/server.js';
 import shorthash from 'shorthash';
 import serializeJavaScript from 'serialize-javascript';
-import _renderer0 from 'custom-elements-ssr/server.js';
+import { GenericTabs } from '@generic-components/components/generic-tabs/GenericTabs.js';
 
 /**
  * Copyright (C) 2017-present by Andrea Giammarchi - @WebReflection
@@ -670,327 +671,7 @@ function renderElement(name, { props: _props, children = "" }, shouldEscape = tr
 
 var index_astro_astro_type_style_index_0_lang = '';
 
-class BatchingElement extends HTMLElement {
-  constructor() {
-    super();
-    this.updateComplete = this.__resolver();
-    this.__uuid = BatchingElement.uuid++; // eslint-disable-line
-  }
-
-  update() {}
-
-  async requestUpdate(dispatchEvent) {
-    if (!this.__renderRequest) {
-      this.__renderRequest = true;
-      await 0;
-      this.update();
-      if (dispatchEvent) {
-        if (this.constructor.config.disabled && this.hasAttribute('disabled')) ; else {
-          this.__dispatch();
-        }
-      }
-
-      this.__res();
-      this.updateComplete = this.__resolver();
-      this.__renderRequest = false;
-    }
-  }
-
-  __dispatch() {} // eslint-disable-line
-
-  __resolver() {
-    return new Promise(res => {
-      this.__res = res;
-    });
-  }
-}
-
-BatchingElement.uuid = 0;
-
-const KEYCODES = {
-  TAB: 9,
-  ENTER: 13,
-  SHIFT: 16,
-  ESC: 27,
-  SPACE: 32,
-  END: 35,
-  HOME: 36,
-  LEFT: 37,
-  UP: 38,
-  RIGHT: 39,
-  DOWN: 40,
-};
-
-/**
- * @TODO
- * - getFocusableElements wont work for listbox, figure something out
- * actually it should work I think, because of the shouldFocus property in config
- */
-
-const SelectedMixin = superclass =>
-  // eslint-disable-next-line
-  class SelectedMixin extends superclass {
-    constructor() {
-      super();
-      this.__onClick = this.__onClick.bind(this);
-      this.__onKeyDown = this.__onKeyDown.bind(this);
-    }
-
-    connectedCallback() {
-      if (super.connectedCallback) {
-        super.connectedCallback();
-      }
-
-      if (this.hasAttribute('selected')) {
-        this.__index = Number(this.getAttribute('selected'));
-      } else {
-        this.__index = 0;
-        this.requestUpdate(false);
-      }
-
-      this.shadowRoot.addEventListener('click', this.__onClick);
-      this.shadowRoot.addEventListener('keydown', this.__onKeyDown);
-
-      this.shadowRoot.addEventListener('slotchange', async () => {
-        this.requestUpdate(false);
-      });
-    }
-
-    static get observedAttributes() {
-      return ['selected'];
-    }
-
-    attributeChangedCallback(name, oldVal, newVal) {
-      if (name === 'selected') {
-        if (newVal !== oldVal) {
-          this.__index = Number(this.getAttribute('selected'));
-          this.requestUpdate(true);
-        }
-      }
-    }
-
-    getElements() {
-      const obj = {};
-      Object.entries(this.constructor.config.selectors).forEach(([key, val]) => {
-        obj[key] = val.selector(this);
-      });
-      return obj;
-    }
-
-    __getFocusableElements() {
-      const focusableElements = Object.entries(this.constructor.config.selectors).find(
-        ([, val]) => val.focusTarget,
-      )[1];
-
-      return [...focusableElements.selector(this)];
-    }
-
-    __dispatch() {
-      const { selected } = this;
-      this.dispatchEvent(
-        new CustomEvent('selected-changed', {
-          detail: selected,
-        }),
-      );
-    }
-
-    __focus() {
-      this.__getFocusableElements()[this.__index].focus();
-    }
-
-    __onClick(e) {
-      if (this.constructor.config.disabled && this.hasAttribute('disabled')) return;
-      const focusableElements = this.__getFocusableElements();
-      if (![...focusableElements].includes(e.target)) return;
-      this.__index = focusableElements.indexOf(e.target);
-      this.requestUpdate(true);
-      if (this.constructor.config.shouldFocus) {
-        this.__focus();
-      }
-    }
-
-    __onKeyDown(event) {
-      if (this.constructor.config.disabled && this.hasAttribute('disabled')) return;
-      const elements = this.__getFocusableElements();
-      // eslint-disable-next-line
-      let { orientation, multiDirectional } = this.constructor.config;
-
-      if (orientation === 'horizontal' && multiDirectional && this.hasAttribute('vertical')) {
-        orientation = 'vertical';
-      }
-
-      switch (event.keyCode) {
-        case orientation === 'horizontal' ? KEYCODES.LEFT : KEYCODES.UP:
-          if (this.__index === 0) {
-            this.__index = elements.length - 1;
-          } else {
-            this.__index--; // eslint-disable-line
-          }
-          break;
-
-        case orientation === 'horizontal' ? KEYCODES.RIGHT : KEYCODES.DOWN:
-          if (this.__index === elements.length - 1) {
-            this.__index = 0;
-          } else {
-            this.__index++; // eslint-disable-line
-          }
-          break;
-
-        case KEYCODES.HOME:
-          this.__index = 0;
-          break;
-
-        case KEYCODES.END:
-          this.__index = elements.length - 1;
-          break;
-        default:
-          return;
-      }
-      event.preventDefault();
-
-      if (this.constructor.config.activateOnKeydown) {
-        this.requestUpdate(true);
-      }
-
-      if (this.constructor.config.shouldFocus) {
-        this.__focus();
-      }
-    }
-
-    /** 
-     * @attr
-     */
-    get selected() {
-      return this.__index;
-    }
-
-    set selected(val) {
-      this.__index = val;
-      if (val !== null) {
-        this.requestUpdate(true);
-      }
-    }
-  };
-
-const template = document.createElement('template');
-template.innerHTML = `
-  <style>
-    :host {
-      display: block;
-    }
-
-    :host([vertical]) {
-      display: flex;
-    }
-
-    :host([vertical]) div[role="tablist"] {
-      flex-direction: column;
-    }
-
-    div[role="tablist"] {
-      display: flex;
-      gap: 0.5rem;
-    }
-  </style>
-  
-  <slot></slot>
-
-  <div part="tablist" role="tablist">
-    <slot name="tab"></slot>
-  </div>
-
-  <div part="panel">
-    <slot name="panel"></slot>
-  </div>
-`;
-
-/**
- * @attr label
- * @attr {boolean} vertical
- */
-class GenericTabs extends SelectedMixin(BatchingElement) {
-  static get config() {
-    return {
-      selectors: {
-        tabs: {
-          selector: el =>
-            Array.from(el.children).filter(node =>
-              node.matches('h1, h2, h3, h4, h5, h6, [slot="tab"]'),
-            ),
-          focusTarget: true,
-        },
-        panels: {
-          selector: el =>
-            Array.from(el.children).filter(
-              node =>
-                node.matches('h1 ~ *, h2 ~ *, h3 ~ *, h4 ~ *, h5 ~ *, h6 ~ *, [slot="panel"]') &&
-                !node.matches('h1, h2, h3, h4, h5, h6, [slot="tab"]'),
-            ),
-        },
-      },
-      multiDirectional: true,
-      orientation: 'horizontal',
-      shouldFocus: true,
-      activateOnKeydown: true,
-      disabled: false,
-    };
-  }
-
-  static get observedAttributes() {
-    return [...super.observedAttributes, 'vertical'];
-  }
-
-  attributeChangedCallback(name, old, val) {
-    super.attributeChangedCallback(name, old, val);
-    if (name === 'vertical') {
-      this.requestUpdate(false);
-    }
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this.shadowRoot
-      .querySelector('[role="tablist"]')
-      .setAttribute('aria-label', this.getAttribute('label') || 'tablist');
-  }
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
-  }
-
-  update() {
-    const { tabs, panels } = this.getElements();
-    tabs.forEach((_, i) => {
-      tabs[i].slot = 'tab';
-      if (i === this.selected) {
-        tabs[i].setAttribute('selected', '');
-        tabs[i].setAttribute('aria-selected', 'true');
-        tabs[i].setAttribute('tabindex', '0');
-        panels[i].removeAttribute('hidden');
-        this.value = tabs[i].textContent.trim();
-      } else {
-        tabs[i].removeAttribute('selected');
-        tabs[i].setAttribute('aria-selected', 'false');
-        tabs[i].setAttribute('tabindex', '-1');
-        panels[i].setAttribute('hidden', '');
-      }
-
-      if (!tabs[i].id.startsWith('generic-tab-')) {
-        tabs[i].setAttribute('role', 'tab');
-        panels[i].setAttribute('role', 'tabpanel');
-
-        tabs[i].id = `generic-tab-${this.__uuid}-${i}`;
-        tabs[i].setAttribute('aria-controls', `generic-tab-${this.__uuid}-${i}`);
-        panels[i].setAttribute('aria-labelledby', `generic-tab-${this.__uuid}-${i}`);
-      }
-    });
-    panels.forEach((_, i) => {
-      panels[i].slot = 'panel';
-    });
-  }
-}
+var index_astro_astro_type_style_index_1_lang = '';
 
 // const template = document.createElement('template');
 // template.innerHTML = `hi WORLD`;
@@ -1005,7 +686,7 @@ class GenericTabs extends SelectedMixin(BatchingElement) {
 
 const tagName = 'generic-tabs';
 console.log(1, 'before upgrade');
-debugger;
+// debugger;
 customElements.define(tagName, GenericTabs);
 
 var $$module1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
@@ -1021,26 +702,27 @@ const $$Index = createComponent(async ($$result, $$props, $$slots) => {
   const STYLES = [];
   for (const STYLE of STYLES)
     $$result.styles.add(STYLE);
-  return render`<html lang="en" class="astro-OHITB74F">
+  return render`<html lang="en" class="astro-LFIBCSOY">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width">
 		<title>Astro</title>
 		
 	<!--astro:head--></head>
+	
 	<body>
-		<h1 class="astro-OHITB74F">Astro</h1>
+		<h1 class="astro-LFIBCSOY">Astro</h1>
 
-		${renderComponent($$result, "generic-tabs", "generic-tabs", { "client:visible": true, "selected": "1", "label": "people", "client:component-hydration": "visible", "client:component-path": $$metadata.getPath("generic-tabs"), "client:component-export": $$metadata.getExport("generic-tabs"), "class": "astro-OHITB74F" }, { "default": () => render`
-			<button slot="tab" class="astro-OHITB74F">About</button>
-			<button slot="tab" class="astro-OHITB74F">Contact</button>
+		${renderComponent($$result, "generic-tabs", "generic-tabs", { "client:visible": true, "selected": "1", "label": "people", "client:component-hydration": "visible", "client:component-path": $$metadata.getPath("generic-tabs"), "client:component-export": $$metadata.getExport("generic-tabs"), "class": "astro-LFIBCSOY" }, { "default": () => render`
+			<button slot="tab" class="astro-LFIBCSOY">About</button>
+			<button slot="tab" class="astro-LFIBCSOY">Contact</button>
 
-			<div slot="panel" class="astro-OHITB74F">
-				<p class="astro-OHITB74F">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+			<div slot="panel" class="astro-LFIBCSOY">
+				<p class="astro-LFIBCSOY">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
 			</div>
 
-			<div slot="panel" class="astro-OHITB74F">
-				<p class="astro-OHITB74F">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+			<div slot="panel" class="astro-LFIBCSOY">
+				<p class="astro-LFIBCSOY">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
 			</div>
 		` })}
 	</body></html>`;
@@ -3918,7 +3600,7 @@ new RegExp(`\\.(${Array.from(STYLE_EXTENSIONS).map((s) => s.slice(1)).join("|")}
 const SCRIPT_EXTENSIONS = /* @__PURE__ */ new Set([".js", ".ts"]);
 new RegExp(`\\.(${Array.from(SCRIPT_EXTENSIONS).map((s) => s.slice(1)).join("|")})($|\\?)`);
 
-const _manifest = Object.assign(deserializeManifest({"routes":[{"file":"","links":["assets/asset.72929038.css"],"scripts":[],"routeData":{"type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/"}}],"markdown":{"mode":"mdx","drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[]},"pageMap":null,"renderers":[],"entryModules":{"/src/components/my-el.js":"entry.9e4a31a8.js","astro/client/visible.js":"entry.9125fc96.js","\u0000@astrojs-ssr-virtual-entry":"entry.mjs","astro:scripts/before-hydration.js":"data:text/javascript;charset=utf-8,//[no before-hydration script]"}}), {
+const _manifest = Object.assign(deserializeManifest({"routes":[{"file":"","links":["assets/asset.64cba41c.css"],"scripts":[],"routeData":{"type":"page","pattern":"^\\/$","segments":[],"params":[],"component":"src/pages/index.astro","pathname":"/"}}],"markdown":{"mode":"mdx","drafts":false,"syntaxHighlight":"shiki","shikiConfig":{"langs":[],"theme":"github-dark","wrap":false},"remarkPlugins":[],"rehypePlugins":[]},"pageMap":null,"renderers":[],"entryModules":{"/src/components/my-el.js":"entry.0ab8b36e.js","astro/client/visible.js":"entry.9125fc96.js","\u0000@astrojs-ssr-virtual-entry":"entry.mjs","astro:scripts/before-hydration.js":"data:text/javascript;charset=utf-8,//[no before-hydration script]"}}), {
 	pageMap: pageMap,
 	renderers: renderers
 });
